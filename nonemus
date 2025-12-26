@@ -17,7 +17,7 @@ elif [[ $1 == -h || $1 == "help" ]]; then
   #echos for the help thing
   echo "usage: nonemus [commands] [...]"
   echo "commands: "
-  echo "    nonemus install <package> <-nc>----- installs the specified package from the aur, currently doesnt support checking if it exists since idk how to check, -nc skips all confirmation"
+  echo "    nonemus install <package> <-nc>----- installs the specified package from the aur, currently doesnt support checking if it exists since idk how to check, -nc skips all confirmation, --skipsignatures skips signatures if you get signature errors."
   echo "thats all currently"
   exit 0
 elif [[ $1 == "install" ]]; then
@@ -33,11 +33,11 @@ elif [[ $1 == "install" ]]; then
     # enter the folder
     cd "${package}"
     # if you specified -nc skip editing pkgbuild
-    if [[ $nc ]]; then
+    if [[ $nc == true ]]; then
       echo skipping PKGBUILD edit
     else
       # asking to edit pkgbuild, default is no because my preference, and yes i know it can be a security risk.
-      read -p "wanna edit PKGBUILD? (y/N)" editpkg
+      read -p "wanna edit PKGBUILD? (y/N) " editpkg
     fi
     if [[ $editpkg == "y" || $editpkg == "yes" ]]; then
       # if you chose to edit the pkgbuild edit it
@@ -46,31 +46,40 @@ elif [[ $1 == "install" ]]; then
     else
       echo skipping editing PKGBUILD either cuz no or -nc
     fi
-    if [[ $nc ]]; then
+    if [[ $nc == true ]]; then
       #install if -nc specified
       echo already installing cuz -nc
       makepkg -si
       installornot=false
     else
       #ask for confirmation
-      read -r -p "DO YOU WANT TO INSTALL $package. WE NEED CONFIRMATION!! (Y/n)" installornot
+      read -r -p "DO YOU WANT TO INSTALL $package. WE NEED CONFIRMATION!! (Y/n) " installornot
     fi
-    if [[ $installornot == true ]]; then
-      # install it
-      echo installing!!!
-      makepkg -si
+    if [[ $installornot == "n" || $installornot == "no" ]]; then
+      # you chose to not install
       cd ..
-      rm -r $package
-    elif [[ $nc ]]; then
+      rm -rf $package
+      echo not installed!!
+    elif [[ $nc == true ]]; then
       # you specified -nc and now its telling you its probably installed, removing the original folder in the process!!!
       echo probably installed now!!
       cd ..
-      rm -r $package
+      rm -rf $package
     else
-      # you chose to not install
+      # install it
+      echo installing!!!
+      for i in "$@"; do
+        if [[ $i == "--skipsignatures" ]]; then
+          makepkg -si --skippgpcheck
+          pgpskip=true
+        fi
+      done
+      if [[ pgpskip != true ]]; then
+        makepkg -si
+      fi
       cd ..
-      rm -r $package
-      echo not installed!!
+      rm -rf $package
+      echo if you got any dependency errors, install those then rerun nonemus install $package
     fi
   fi
 else
