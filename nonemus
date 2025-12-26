@@ -1,54 +1,80 @@
 #!/usr/bin/env bash
+# arguement 2 is stored in $package
 package=$2
+
+# check if -nc has been specified, if so set $nc to true else false
 if [[ $3 == "-nc" ]]; then
   nc=true
 else
   nc=false
 fi
+
+# nothing specified? ask to use -h
 if [[ -z $1 ]]; then
   echo "nothing was specified, use -h to list commands"
   exit 1
 elif [[ $1 == -h || $1 == "help" ]]; then
+  #echos for the help thing
   echo "usage: nonemus [commands] [...]"
   echo "commands: "
-  echo "    nonemus install <package> <-nc>----- installs the specified package from the aur, currently doesnt support checking if it exists, -nc skips all confirmation"
+  echo "    nonemus install <package> <-nc>----- installs the specified package from the aur, currently doesnt support checking if it exists since idk how to check, -nc skips all confirmation"
   echo "thats all currently"
+  exit 0
 elif [[ $1 == "install" ]]; then
+  # did you specify a package?
   if [[ -z $2 ]]; then
     echo "you didnt specify a package. -h"
     exit 1
   else
-    echo "hopefully will be installing package $package!!"
+    # you did specify a package
+    echo "getting PKGBUILD for package $package..."
+    # STEAL the pkgbuild from the aur
     git clone https://aur.archlinux.org/${package}
+    # enter the folder
     cd "${package}"
+    # if you specified -nc skip editing pkgbuild
     if [[ $nc ]]; then
       echo skipping PKGBUILD edit
     else
+      # asking to edit pkgbuild, default is no because my preference, and yes i know it can be a security risk.
       read -p "wanna edit PKGBUILD? (y/N)" editpkg
     fi
     if [[ $editpkg == "y" || $editpkg == "yes" ]]; then
+      # if you chose to edit the pkgbuild edit it
       echo will use whats in \$EDITOR, aka $EDITOR
       $EDITOR PKGBUILD
     else
       echo skipping editing PKGBUILD either cuz no or -nc
     fi
     if [[ $nc ]]; then
+      #install if -nc specified
       echo already installing cuz -nc
       makepkg -si
       installornot=false
     else
+      #ask for confirmation
       read -r -p "DO YOU WANT TO INSTALL $package. WE NEED CONFIRMATION!! (Y/n)" installornot
     fi
     if [[ $installornot == true ]]; then
+      # install it
+      echo installing!!!
       makepkg -si
+      cd ..
+      rm -r $package
     elif [[ $nc ]]; then
+      # you specified -nc and now its telling you its probably installed, removing the original folder in the process!!!
       echo probably installed now!!
+      cd ..
+      rm -r $package
     else
+      # you chose to not install
       cd ..
       rm -r $package
       echo not installed!!
+    fi
   fi
 else
+  #you didnt specify a supported command so heres the error message
   echo "$1 is not a currently supported command, use -h."
   exit 2
 fi
