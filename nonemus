@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+package=$2
+if [[ $3 == "-nc" ]]; then
+  nc=true
+else
+  nc=false
+fi
+if [[ -z $1 ]]; then
+  echo "nothing was specified, use -h to list commands"
+  exit 1
+elif [[ $1 == -h || $1 == "help" ]]; then
+  echo "usage: nonemus [commands] [...]"
+  echo "commands: "
+  echo "    nonemus install <package> <-nc>----- installs the specified package from the aur, currently doesnt support checking if it exists, -nc skips all confirmation"
+  echo "thats all currently"
+elif [[ $1 == "install" ]]; then
+  if [[ -z $2 ]]; then
+    echo "you didnt specify a package. -h"
+    exit 1
+  else
+    echo "hopefully will be installing package $package!!"
+    git clone https://aur.archlinux.org/${package}
+    cd "${package}"
+    if [[ $nc ]]; then
+      echo skipping PKGBUILD edit
+    else
+      read -p "wanna edit PKGBUILD? (y/N)" editpkg
+    fi
+    if [[ $editpkg == "y" || $editpkg == "yes" ]]; then
+      echo will use whats in \$EDITOR, aka $EDITOR
+      $EDITOR PKGBUILD
+    else
+      echo skipping editing PKGBUILD either cuz no or -nc
+    fi
+    if [[ $nc ]]; then
+      echo already installing cuz -nc
+      makepkg -si
+      installornot=false
+    else
+      read -r -p "DO YOU WANT TO INSTALL $package. WE NEED CONFIRMATION!! (Y/n)" installornot
+    fi
+    if [[ $installornot == true ]]; then
+      makepkg -si
+    elif [[ $nc ]]; then
+      echo probably installed now!!
+    else
+      cd ..
+      rm -r $package
+      echo not installed!!
+  fi
+else
+  echo "$1 is not a currently supported command, use -h."
+  exit 2
+fi
