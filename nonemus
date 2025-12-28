@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # arguement 2 is stored in $package
 package=$2
 
