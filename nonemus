@@ -19,7 +19,7 @@ help() {
   echo "thats all currently"
   exit 0
 }
-# nothing specified? ask to use -h
+# nothing specified? display help message
 if [[ -z $1 ]]; then
   help 0
 elif [[ $1 == -h || $1 == "help" ]]; then
