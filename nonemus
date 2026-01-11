@@ -2,19 +2,26 @@
 # arguement 2 is stored in $package
 package=$2
 
+# dave t boulderson might be a person but probably isnt
+bold=$(tput bold)
+nomal=$(tput sgr0) # nomal!!!11!!!
+
 # check if -nc has been specified, if so set $nc to true else false
-if [[ $3 == "-nc" ]]; then
-  nc=true
-else
-  nc=false
-fi
+for i in $@; do
+  if [[ $i == "-nc" ]]; then
+    nc="true"
+  else
+    nc="false"
+  fi
+done
 
 # help func
 help() {
   #echos for the help thing
   echo "usage: nonemus [commands] [...]"
   echo "commands: "
-  echo "    nonemus install <package> <-nc>----- installs the specified package from the aur, currently doesnt support checking if it exists since idk how to check, -nc skips all confirmation, --skipsignatures skips signatures if you get signature errors."
+  echo "    nonemus install <package> <-nc>----- installs the specified package from the aur, -nc skips all confirmation, --skipsignatures skips signatures"
+  echo "    nonemus test-stuff -------- is js for testing whatever without installing packages"
   echo "    nonemus -h ------ shows this"
   echo "thats all currently"
   exit 0
@@ -24,6 +31,8 @@ if [[ -z $1 ]]; then
   help 0
 elif [[ $1 == -h || $1 == "help" ]]; then
   help 0
+elif [[ $1 == "test-stuff" ]]; then
+  echo $(tput setab 6)$(tput setaf 1)dollar ${bold}$(tput setab 2)$(tput setaf 0)testing$nomal
 elif [[ $1 == "install" ]]; then
   # did you specify a package?
   if [[ -z $2 ]]; then
@@ -41,7 +50,7 @@ elif [[ $1 == "install" ]]; then
       echo skipping PKGBUILD edit
     else
       # asking to edit pkgbuild, default is no because my preference, and yes i know it can be a security risk.
-      read -p "wanna edit PKGBUILD? (y/N) " editpkg
+      read -p "${bold}wanna edit PKGBUILD? (y/N) ${nomal}" editpkg
     fi
     if [[ $editpkg == "y" || $editpkg == "yes" ]]; then
       # if you chose to edit the pkgbuild edit it
@@ -52,26 +61,26 @@ elif [[ $1 == "install" ]]; then
     fi
     if [[ $nc == true ]]; then
       #install if -nc specified
-      echo already installing cuz -nc
+      echo ${bold}already installing cuz -nc${nomal}
       makepkg -si
       installornot=false
     else
       #ask for confirmation
-      read -r -p "DO YOU WANT TO INSTALL $package. WE NEED CONFIRMATION!! (Y/n) " installornot
+      read -r -p "${bold}$(tput setaf 1)DO YOU WANT TO INSTALL $package. WE NEED CONFIRMATION!!${nomal}${bold} (Y/n) ${nomal}" installornot
     fi
     if [[ $installornot == "n" || $installornot == "no" ]]; then
       # you chose to not install
       cd ..
       rm -rf $package
-      echo not installed!!
+      echo ${bold}$(tput setaf 1)not installed.$nomal
     elif [[ $nc == true ]]; then
       # you specified -nc and now its telling you its probably installed, removing the original folder in the process!!!
-      echo probably installed now!!
+      echo ${bold}$(tput setaf 2)probably installed now!!
       cd ..
       rm -rf $package
     else
       # install it
-      echo installing!!!
+      echo ${bold}$(tput setaf 4)installing!!!${nomal}
       for i in "$@"; do
         if [[ $i == "--skipsignatures" ]]; then
           makepkg -si --skippgpcheck
@@ -83,7 +92,6 @@ elif [[ $1 == "install" ]]; then
       fi
       cd ..
       rm -rf $package
-      echo if you got any dependency errors, install those then rerun nonemus install $package
     fi
   fi
 else
